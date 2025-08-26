@@ -16,7 +16,17 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Enhanced color palette for teams
+def get_team_color(team_name):
+    """Get color for a team, generate random color for new teams"""
+    if team_name in TEAM_COLORS:
+        return TEAM_COLORS[team_name]
+    else:
+        # Generate a consistent color based on team name hash
+        import hashlib
+        hash_object = hashlib.md5(team_name.encode())
+        hex_dig = hash_object.hexdigest()
+        # Use the first 6 characters to create a color
+        return f"#{hex_dig[:6]}"
 TEAM_COLORS = {
     "A-Team": "#FF6B6B",        # Red
     "Ninjas": "#4ECDC4",        # Teal
@@ -60,7 +70,7 @@ def create_timeline_plot(tasks_data, figure_width=18, figure_height=12):
     # Plot each team's tasks with enhanced styling and better date visibility
     for i, team in enumerate(teams):
         y_base = i
-        color = TEAM_COLORS.get(team, '#888888')
+        color = get_team_color(team)
 
         for idx, (name, start, end) in enumerate(team_tasks[team]):
             y_offset = y_base + (idx * 0.3)
@@ -89,10 +99,19 @@ def create_timeline_plot(tasks_data, figure_width=18, figure_height=12):
                 font_size = 9
 
             # Text color selection
-            if color in ['#FFEAA7', '#96CEB4', '#B4F8C8']:
+            light_colors = ['#FFEAA7', '#96CEB4', '#B4F8C8', '#DDA0DD', '#C7CEEA']
+            if any(color.upper() == light_color.upper() for light_color in light_colors):
                 text_color = 'black'
             else:
-                text_color = 'white'
+                # Check if color is light using RGB values
+                hex_color = color.lstrip('#')
+                if len(hex_color) == 6:
+                    r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+                    # Calculate brightness using relative luminance
+                    brightness = (r * 0.299 + g * 0.587 + b * 0.114)
+                    text_color = 'black' if brightness > 127 else 'white'
+                else:
+                    text_color = 'white'
 
             # Position task name on the bar
             ax.text(mid_point, y_offset, display_name,
@@ -177,7 +196,7 @@ def create_timeline_plot(tasks_data, figure_width=18, figure_height=12):
     legend_labels = []
 
     for team in teams:
-        color = TEAM_COLORS.get(team, '#888888')
+        color = get_team_color(team)
         legend_elements.append(plt.Rectangle((0,0),1,1, facecolor=color, alpha=0.8, 
                                            edgecolor='black', linewidth=1))
         legend_labels.append(team)
@@ -203,8 +222,27 @@ def main():
     with st.sidebar:
         st.header("⚙️ Configuration")
         
+        # Team Management Section
+        st.subheader("👥 Team Management")
+        if st.session_state.tasks:
+            unique_teams = list(set([task["Team"] for task in st.session_state.tasks]))
+            st.write(f"**Active Teams ({len(unique_teams)}):**")
+            for team in sorted(unique_teams):
+                team_color = get_team_color(team)
+                st.markdown(
+                    f"<div style='display:flex; align-items:center; margin:2px 0;'>"
+                    f"<span style='display:inline-block; width:12px; height:12px; "
+                    f"background-color:{team_color}; border-radius:2px; margin-right:8px;'></span>"
+                    f"<span style='font-size:14px;'>{team}</span></div>",
+                    unsafe_allow_html=True
+                )
+        else:
+            st.info("No teams yet. Add tasks to see teams here.")
+        
+        st.markdown("---")
+        
         # Plot dimensions
-        st.subheader("Plot Settings")
+        st.subheader("📊 Plot Settings")
         figure_width = st.slider("Figure Width", 12, 24, 18)
         figure_height = st.slider("Figure Height", 8, 16, 12)
         
@@ -246,8 +284,25 @@ def main():
             with col_task:
                 task_name = st.text_input("Task Name", placeholder="Enter task name...")
             with col_team:
-                available_teams = list(TEAM_COLORS.keys())
-                team = st.selectbox("Team", available_teams)
+                # Get existing teams from current tasks
+                existing_teams = list(set([task.get("Team", "") for task in st.session_state.tasks if task.get("Team")]))
+                available_teams = list(TEAM_COLORS.keys()) + [team for team in existing_teams if team not in TEAM_COLORS.keys()]
+                
+                # Team selection with custom input option
+                team_option = st.radio(
+                    "Team Selection:",
+                    ["Select from existing", "Enter new team"],
+                    horizontal=True,
+                    help="Choose from existing teams or create a new one"
+                )
+                
+                if team_option == "Select from existing":
+                    if available_teams:
+                        team = st.selectbox("Select Team", available_teams, key="team_select")
+                    else:
+                        team = st.text_input("Team Name", placeholder="Enter team name...", key="team_input_fallback")
+                else:
+                    team = st.text_input("Team Name", placeholder="Enter new team name...", key="team_input_new")
             with col_start:
                 start_date = st.date_input("Start Date", value=datetime.now().date())
             with col_end:
@@ -255,26 +310,42 @@ def main():
             
             submitted = st.form_submit_button("➕ Add Task")
             
-            if submitted and task_name:
+            if submitted and task_name and team:
                 if start_date <= end_date:
                     new_task = {
                         "Task Name": task_name,
                         "Start Date": start_date.strftime("%Y-%m-%d"),
                         "End Date": end_date.strftime("%Y-%m-%d"),
-                        "Team": team
+                        "Team": team.strip()
                     }
                     st.session_state.tasks.append(new_task)
-                    st.success(f"Task '{task_name}' added successfully!")
+                    st.success(f"Task '{task_name}' added successfully to team '{team}'!")
                     st.rerun()
                 else:
                     st.error("End date must be after or equal to start date!")
+            elif submitted and task_name and not team:
+                st.error("Please select or enter a team name!")
 
     with col2:
         st.subheader("📊 Current Tasks")
         
         if st.session_state.tasks:
-            # Display current tasks
+            # Display current tasks with team management
             df = pd.DataFrame(st.session_state.tasks)
+            
+            # Show team summary
+            team_counts = df['Team'].value_counts()
+            st.write("**Team Summary:**")
+            for team, count in team_counts.items():
+                team_color = get_team_color(team)
+                st.markdown(
+                    f"<span style='display:inline-block; width:12px; height:12px; "
+                    f"background-color:{team_color}; border-radius:2px; margin-right:5px;'></span>"
+                    f"**{team}**: {count} task{'s' if count != 1 else ''}",
+                    unsafe_allow_html=True
+                )
+            
+            st.markdown("---")
             st.dataframe(df, use_container_width=True, hide_index=True)
             
             # Bulk operations
@@ -374,11 +445,13 @@ def main():
         
         **Features:**
         - 📅 **Date Visibility**: Start dates (blue) and end dates (red) are clearly marked
-        - 🎨 **Team Colors**: Each team has a unique color
+        - 🎨 **Dynamic Team Colors**: Each team gets a unique color (predefined or auto-generated)
+        - 🏷️ **Flexible Team Names**: Add custom team names or select from existing ones
         - 📊 **Duration Display**: Task duration shown in days
         - 🎯 **Milestones**: Single-day tasks shown as diamond markers
         - 📈 **Week Numbers**: Calendar weeks displayed at the top
         - 📍 **Today Marker**: Red dashed line shows current date
+        - 👥 **Team Management**: View active teams and their colors in the sidebar
         """)
 
 if __name__ == "__main__":
