@@ -16,13 +16,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Install streamlit-tags if not already installed (for tag input)
-try:
-    from streamlit_tags import st_tags
-except ImportError:
-    st.error("Please install streamlit-tags: pip install streamlit-tags")
-    st.stop()
-
 def get_team_color(team_name):
     """Get color for a team, generate random color for new teams"""
     if team_name in TEAM_COLORS:
@@ -291,24 +284,26 @@ def main():
             
             with col_task:
                 task_name = st.text_input("Task Name", placeholder="Enter task name...")
-            
             with col_team:
-                # Get existing teams from current tasks for suggestions
+                # Get existing teams from current tasks
                 existing_teams = list(set([task.get("Team", "") for task in st.session_state.tasks if task.get("Team")]))
-                predefined_teams = list(TEAM_COLORS.keys())
-                all_suggestions = list(set(predefined_teams + existing_teams))
+                available_teams = list(TEAM_COLORS.keys()) + [team for team in existing_teams if team not in TEAM_COLORS.keys()]
                 
-                # Tag-based team selection
-                selected_teams = st_tags(
-                    label='Team (Select existing or type new):',
-                    text='Press enter to add team',
-                    value=[],
-                    suggestions=all_suggestions,
-                    maxtags=1,  # Only allow one team per task
-                    key='team_tags'
+                # Team selection with custom input option
+                team_option = st.radio(
+                    "Team Selection:",
+                    ["Select from existing", "Enter new team"],
+                    horizontal=True,
+                    help="Choose from existing teams or create a new one"
                 )
-                team = selected_teams[0] if selected_teams else ""
-            
+                
+                if team_option == "Select from existing":
+                    if available_teams:
+                        team = st.selectbox("Select Team", available_teams, key="team_select")
+                    else:
+                        team = st.text_input("Team Name", placeholder="Enter team name...", key="team_input_fallback")
+                else:
+                    team = st.text_input("Team Name", placeholder="Enter new team name...", key="team_input_new")
             with col_start:
                 start_date = st.date_input("Start Date", value=datetime.now().date())
             with col_end:
@@ -352,67 +347,7 @@ def main():
                 )
             
             st.markdown("---")
-            
-            # Editable task table
-            st.write("**📝 Edit Tasks (Double-click cells to edit):**")
-            
-            # Create editable dataframe with proper indexing
-            edited_df = st.data_editor(
-                df,
-                use_container_width=True,
-                num_rows="dynamic",  # Allow adding/deleting rows
-                column_config={
-                    "Task Name": st.column_config.TextColumn(
-                        "Task Name",
-                        help="Enter the task name",
-                        max_chars=100,
-                        required=True
-                    ),
-                    "Start Date": st.column_config.DateColumn(
-                        "Start Date",
-                        help="Select the start date",
-                        format="YYYY-MM-DD",
-                        required=True
-                    ),
-                    "End Date": st.column_config.DateColumn(
-                        "End Date", 
-                        help="Select the end date",
-                        format="YYYY-MM-DD",
-                        required=True
-                    ),
-                    "Team": st.column_config.TextColumn(
-                        "Team",
-                        help="Enter the team name",
-                        max_chars=50,
-                        required=True
-                    )
-                },
-                key="task_editor"
-            )
-            
-            # Update session state if dataframe was edited
-            if not edited_df.equals(df):
-                # Convert dates to strings for consistency
-                edited_df['Start Date'] = edited_df['Start Date'].astype(str)
-                edited_df['End Date'] = edited_df['End Date'].astype(str)
-                
-                # Validate dates
-                valid_data = True
-                for idx, row in edited_df.iterrows():
-                    try:
-                        start_dt = pd.to_datetime(row['Start Date'])
-                        end_dt = pd.to_datetime(row['End Date'])
-                        if start_dt > end_dt:
-                            st.error(f"Row {idx + 1}: End date must be after or equal to start date")
-                            valid_data = False
-                    except:
-                        st.error(f"Row {idx + 1}: Invalid date format")
-                        valid_data = False
-                
-                if valid_data:
-                    st.session_state.tasks = edited_df.to_dict('records')
-                    st.success("Tasks updated successfully!")
-                    st.rerun()
+            st.dataframe(df, use_container_width=True, hide_index=True)
             
             # Bulk operations
             col_clear, col_download = st.columns(2)
@@ -498,23 +433,9 @@ def main():
     with st.expander("ℹ️ How to Use"):
         st.markdown("""
         **Getting Started:**
-        1. **Add Tasks**: Use the form on the left to add individual tasks
-        2. **Team Selection**: Use the tag input - type team name and press Enter (suggestions will appear)
-        3. **Edit Tasks**: Double-click any cell in the task table to edit it directly
-        4. **Load Sample Data**: Click the button in the sidebar to see an example
-        5. **Upload CSV**: Upload a CSV file with your project data
-        
-        **Tag-based Team Selection:**
-        - Start typing to see existing team suggestions
-        - Press Enter to add a new team
-        - Only one team can be assigned per task
-        - Teams get consistent colors automatically
-        
-        **Editing Tasks:**
-        - Double-click any cell to edit
-        - Add new rows using the + button in the table
-        - Delete rows using the - button in the table
-        - Changes are saved automatically
+        1. **Add Tasks Manually**: Use the form on the left to add individual tasks
+        2. **Load Sample Data**: Click the button in the sidebar to see an example
+        3. **Upload CSV**: Upload a CSV file with your project data
         
         **CSV Format:**
         Your CSV should have these columns:
@@ -526,8 +447,7 @@ def main():
         **Features:**
         - 📅 **Date Visibility**: Start dates (blue) and end dates (red) are clearly marked
         - 🎨 **Dynamic Team Colors**: Each team gets a unique color (predefined or auto-generated)
-        - 🏷️ **Tag-based Team Selection**: Easy team selection with autocomplete
-        - ✏️ **Inline Editing**: Edit tasks directly in the table
+        - 🏷️ **Flexible Team Names**: Add custom team names or select from existing ones
         - 📊 **Duration Display**: Task duration shown in days
         - 🎯 **Milestones**: Single-day tasks shown as diamond markers
         - 📈 **Week Numbers**: Calendar weeks displayed at the top
