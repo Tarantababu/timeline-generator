@@ -5,7 +5,8 @@ A professional Streamlit web application for creating interactive project timeli
 ## 🌟 Features
 
 - **Interactive Task Management**: Add, edit, and manage project tasks through a user-friendly interface
-- **Flexible Team Management**: Create custom team names or select from existing teams with tag-like input
+- **Tag-based Team Selection**: Easy team selection with autocomplete and custom team creation
+- **Inline Task Editing**: Edit tasks directly in the table with double-click functionality
 - **Enhanced Date Visibility**: Clear start (blue) and end (red) date markers on each task
 - **Dynamic Team Colors**: Automatic color assignment for new teams, predefined colors for common teams
 - **CSV Import/Export**: Upload existing project data or export your timeline data
