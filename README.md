@@ -5,10 +5,8 @@ A professional Streamlit web application for creating interactive project timeli
 ## 🌟 Features
 
 - **Interactive Task Management**: Add, edit, and manage project tasks through a user-friendly interface
-- **Tag-based Team Selection**: Easy team selection with autocomplete and custom team creation
-- **Inline Task Editing**: Edit tasks directly in the table with double-click functionality
 - **Enhanced Date Visibility**: Clear start (blue) and end (red) date markers on each task
-- **Dynamic Team Colors**: Automatic color assignment for new teams, predefined colors for common teams
+- **Team Color Coding**: Each team gets a unique color for easy identification
 - **CSV Import/Export**: Upload existing project data or export your timeline data
 - **Professional Visualizations**: High-quality timeline charts with week numbers and duration indicators
 - **Real-time Updates**: Live timeline generation as you add or modify tasks
@@ -73,19 +71,19 @@ Release Planning,2025-09-15,2025-09-15,All Teams
 - **Week Numbers**: Calendar weeks displayed at the top of the chart
 - **Milestones**: Diamond markers for single-day tasks
 
-## 🎨 Team Management
+## 🎨 Available Teams
 
-### Predefined Teams
-The app comes with pre-configured team colors for common team names:
-- A-Team (Red) - Ninjas (Teal) - Mavericks (Blue) - Challengers (Green)
-- 5G (Yellow) - All Teams (Plum) - Alchemist (Orange) - Phoenix (Pink)
-- Spartans (Lavender) - Wizards (Light Green)
-
-### Custom Teams
-- Enter any team name when adding tasks
-- Colors are automatically generated for new teams using a consistent algorithm
-- Team colors remain consistent throughout your project
-- View all active teams and their colors in the sidebar
+The app comes with pre-configured team colors:
+- A-Team (Red)
+- Ninjas (Teal)
+- Mavericks (Blue)
+- Challengers (Green)
+- 5G (Yellow)
+- All Teams (Plum)
+- Alchemist (Orange)
+- Phoenix (Pink)
+- Spartans (Lavender)
+- Wizards (Light Green)
 
 ## 📁 Project Structure
 
@@ -101,13 +99,14 @@ project-timeline-generator/
 
 ## 🔧 Customization
 
-### Adding Teams
-You can either:
-1. **Select existing teams**: Choose from teams already used in your project
-2. **Create new teams**: Enter any custom team name
-3. **Mix and match**: Use both predefined and custom team names
-
-The app will automatically assign colors to new teams and maintain consistency across your project.
+### Adding New Teams
+Edit the `TEAM_COLORS` dictionary in `app.py`:
+```python
+TEAM_COLORS = {
+    "Your Team": "#HEX_COLOR",
+    # ... existing teams
+}
+```
 
 ### Modifying Plot Appearance
 Adjust the `create_timeline_plot()` function parameters:
