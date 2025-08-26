@@ -218,6 +218,10 @@ def main():
     st.title("📅 Project Timeline Generator")
     st.markdown("Create professional project timelines with team assignments and date visibility")
 
+    # Initialize session state for tasks FIRST
+    if 'tasks' not in st.session_state:
+        st.session_state.tasks = []
+
     # Sidebar for inputs
     with st.sidebar:
         st.header("⚙️ Configuration")
@@ -258,10 +262,7 @@ def main():
     with col1:
         st.subheader("📝 Task Input")
         
-        # Initialize session state for tasks
-        if 'tasks' not in st.session_state:
-            st.session_state.tasks = []
-        
+        # Sample data loading (moved here after session state initialization)
         # Load sample data if requested
         if 'sample_loaded' in st.session_state and st.session_state.sample_loaded:
             st.session_state.tasks = [
