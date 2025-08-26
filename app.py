@@ -16,6 +16,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Install streamlit-tags if not already installed (for tag input)
+try:
+    from streamlit_tags import st_tags
+except ImportError:
+    st.error("Please install streamlit-tags: pip install streamlit-tags")
+    st.stop()
+
 def get_team_color(team_name):
     """Get color for a team, generate random color for new teams"""
     if team_name in TEAM_COLORS:
