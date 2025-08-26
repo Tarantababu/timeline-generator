@@ -29,15 +29,15 @@ def get_team_color(team_name):
         return f"#{hex_dig[:6]}"
 TEAM_COLORS = {
     "A-Team": "#FF6B6B",        # Red
-    "Ninjas": "#4ECDC4",        # Teal
-    "Mavericks": "#45B7D1",     # Blue
+    "Defenders": "#4ECDC4",        # Teal
+    "Oceans11": "#45B7D1",     # Blue
     "Challengers": "#96CEB4",   # Green
     "5G": "#FFEAA7",            # Yellow
     "All Teams": "#DDA0DD",     # Plum
     "Alchemist": "#FFB347",     # Orange
     "Phoenix": "#FF8C94",       # Pink
-    "Spartans": "#C7CEEA",      # Lavender
-    "Wizards": "#B4F8C8"        # Light Green
+    "Rainbow6": "#C7CEEA",      # Lavender
+    "Explorers": "#B4F8C8"        # Light Green
 }
 
 def create_timeline_plot(tasks_data, figure_width=18, figure_height=12):
