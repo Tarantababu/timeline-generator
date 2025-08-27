@@ -29,15 +29,15 @@ def get_team_color(team_name):
         return f"#{hex_dig[:6]}"
 TEAM_COLORS = {
     "A-Team": "#FF6B6B",        # Red
-    "Defenders": "#4ECDC4",        # Teal
-    "Oceans11": "#45B7D1",     # Blue
+    "Ninjas": "#4ECDC4",        # Teal
+    "Mavericks": "#45B7D1",     # Blue
     "Challengers": "#96CEB4",   # Green
     "5G": "#FFEAA7",            # Yellow
     "All Teams": "#DDA0DD",     # Plum
     "Alchemist": "#FFB347",     # Orange
     "Phoenix": "#FF8C94",       # Pink
-    "Rainbow6": "#C7CEEA",      # Lavender
-    "Explorers": "#B4F8C8"        # Light Green
+    "Spartans": "#C7CEEA",      # Lavender
+    "Wizards": "#B4F8C8"        # Light Green
 }
 
 def create_timeline_plot(tasks_data, figure_width=18, figure_height=12):
@@ -288,6 +288,8 @@ def main():
                 # Get existing teams from current tasks
                 existing_teams = list(set([task.get("Team", "") for task in st.session_state.tasks if task.get("Team")]))
                 available_teams = list(TEAM_COLORS.keys()) + [team for team in existing_teams if team not in TEAM_COLORS.keys()]
+                # Remove duplicates while preserving order
+                available_teams = list(dict.fromkeys(available_teams))
                 
                 # Team selection with custom input option
                 team_option = st.radio(
@@ -299,11 +301,27 @@ def main():
                 
                 if team_option == "Select from existing":
                     if available_teams:
-                        team = st.selectbox("Select Team", available_teams, key="team_select")
+                        team = st.selectbox(
+                            "Select Team", 
+                            available_teams, 
+                            key="team_select",
+                            help="Choose from predefined or previously used teams"
+                        )
                     else:
-                        team = st.text_input("Team Name", placeholder="Enter team name...", key="team_input_fallback")
+                        st.info("No existing teams found. Please enter a new team name below.")
+                        team = st.text_input(
+                            "Team Name", 
+                            placeholder="Enter team name...", 
+                            key="team_input_fallback",
+                            help="Enter your first team name"
+                        )
                 else:
-                    team = st.text_input("Team Name", placeholder="Enter new team name...", key="team_input_new")
+                    team = st.text_input(
+                        "Team Name", 
+                        placeholder="Enter new team name...", 
+                        key="team_input_new",
+                        help="Create a new team with any name you want"
+                    )
             with col_start:
                 start_date = st.date_input("Start Date", value=datetime.now().date())
             with col_end:
