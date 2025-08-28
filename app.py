@@ -294,44 +294,38 @@ def main():
                 # Team selection with custom input option
                 team_option = st.radio(
                     "Team Selection:",
-                    ["Select from existing", "Enter new team"],
+                    ["existing", "new"],
+                    format_func=lambda x: "Select from existing" if x == "existing" else "Enter new team",
                     horizontal=True,
                     help="Choose from existing teams or create a new one",
-                    key="team_selection_radio"
+                    key="team_mode"
                 )
                 
-                # Create empty container that will be replaced based on selection
-                team_input_container = st.empty()
-                
-                # Initialize team variable
-                team = ""
-                
-                # Handle team input based on selection
-                if team_option == "Select from existing":
-                    with team_input_container.container():
-                        if available_teams:
-                            team = st.selectbox(
-                                "📋 Choose Existing Team", 
-                                ["-- Select a team --"] + available_teams,
-                                key="existing_team_dropdown",
-                                help="Select from predefined or previously used teams"
-                            )
-                            # Convert placeholder to empty string
-                            if team == "-- Select a team --":
-                                team = ""
-                        else:
-                            st.info("ℹ️ No existing teams found. Switch to 'Enter new team' to create your first team.")
-                            team = ""
-                else:
-                    # Clear the container and add text input
-                    with team_input_container.container():
-                        team = st.text_input(
-                            "✏️ Enter New Team Name", 
-                            value="",
-                            placeholder="Type your team name here...", 
-                            key="new_team_text_input",
-                            help="Create a new team with any name you want"
+                # Different approach: Use selectbox with special handling
+                if team_option == "existing":
+                    # Show existing teams in selectbox
+                    if available_teams:
+                        all_options = ["-- Select a team --"] + available_teams
+                        selected = st.selectbox(
+                            "Team",
+                            options=all_options,
+                            key="team_selector",
+                            help="Choose from available teams"
                         )
+                        team = "" if selected == "-- Select a team --" else selected
+                    else:
+                        st.info("No existing teams. Switch to 'Enter new team' mode.")
+                        team = ""
+                else:
+                    # Show custom input option in selectbox
+                    custom_input = st.text_input(
+                        "Team",
+                        value="",
+                        placeholder="Enter new team name...",
+                        key="team_custom_input",
+                        help="Type your new team name"
+                    )
+                    team = custom_input.strip() if custom_input else ""
             with col_start:
                 start_date = st.date_input("Start Date", value=datetime.now().date())
             with col_end:
