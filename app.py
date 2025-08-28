@@ -299,27 +299,37 @@ def main():
                     help="Choose from existing teams or create a new one"
                 )
                 
+                # Initialize team variable
+                team = ""
+                
                 if team_option == "Select from existing":
+                    # Show dropdown for existing teams
                     if available_teams:
                         team = st.selectbox(
-                            "Select Team", 
-                            available_teams, 
-                            key="team_select",
-                            help="Choose from predefined or previously used teams"
+                            "📋 Choose Existing Team", 
+                            [""] + available_teams,  # Add empty option at top
+                            key="team_dropdown_existing",
+                            help="Select from predefined or previously used teams",
+                            index=0
                         )
                     else:
-                        st.info("No existing teams found. Please enter a new team name below.")
-                        team = st.text_input(
-                            "Team Name", 
-                            placeholder="Enter team name...", 
-                            key="team_input_fallback",
-                            help="Enter your first team name"
+                        # If no teams exist, show message and empty text input
+                        st.info("ℹ️ No existing teams found. Switch to 'Enter new team' to create your first team.")
+                        st.selectbox(
+                            "📋 Choose Existing Team", 
+                            ["No teams available"], 
+                            key="team_dropdown_empty",
+                            disabled=True
                         )
-                else:
+                        team = ""
+                        
+                elif team_option == "Enter new team":
+                    # Show text input for new team
                     team = st.text_input(
-                        "Team Name", 
-                        placeholder="Enter new team name...", 
-                        key="team_input_new",
+                        "✏️ Enter New Team Name", 
+                        value="",
+                        placeholder="Type your team name here...", 
+                        key="team_text_input_new",
                         help="Create a new team with any name you want"
                     )
             with col_start:
