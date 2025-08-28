@@ -300,37 +300,38 @@ def main():
                     key="team_selection_radio"
                 )
                 
-                # Force different widget rendering based on selection
+                # Create empty container that will be replaced based on selection
+                team_input_container = st.empty()
+                
+                # Initialize team variable
+                team = ""
+                
+                # Handle team input based on selection
                 if team_option == "Select from existing":
-                    # Show dropdown for existing teams
-                    if available_teams:
-                        team = st.selectbox(
-                            "📋 Choose Existing Team", 
-                            ["-- Select a team --"] + available_teams,
-                            key=f"team_dropdown_{hash('existing')}",
-                            help="Select from predefined or previously used teams"
-                        )
-                        # Don't use the placeholder value
-                        if team == "-- Select a team --":
+                    with team_input_container.container():
+                        if available_teams:
+                            team = st.selectbox(
+                                "📋 Choose Existing Team", 
+                                ["-- Select a team --"] + available_teams,
+                                key="existing_team_dropdown",
+                                help="Select from predefined or previously used teams"
+                            )
+                            # Convert placeholder to empty string
+                            if team == "-- Select a team --":
+                                team = ""
+                        else:
+                            st.info("ℹ️ No existing teams found. Switch to 'Enter new team' to create your first team.")
                             team = ""
-                    else:
-                        # If no teams exist, show message
-                        st.info("ℹ️ No existing teams found. Switch to 'Enter new team' to create your first team.")
-                        team = ""
-                            
-                else:  # "Enter new team" is selected
-                    # Show text input for new team - completely different widget
-                    team = st.text_input(
-                        "✏️ Enter New Team Name", 
-                        value="",
-                        placeholder="Type your team name here...", 
-                        key=f"team_text_{hash('new')}",
-                        help="Create a new team with any name you want",
-                        label_visibility="visible"
-                    )
-                    
-                # Debug info (remove this later)
-                st.caption(f"Selected mode: {team_option} | Team value: '{team}'")
+                else:
+                    # Clear the container and add text input
+                    with team_input_container.container():
+                        team = st.text_input(
+                            "✏️ Enter New Team Name", 
+                            value="",
+                            placeholder="Type your team name here...", 
+                            key="new_team_text_input",
+                            help="Create a new team with any name you want"
+                        )
             with col_start:
                 start_date = st.date_input("Start Date", value=datetime.now().date())
             with col_end:
