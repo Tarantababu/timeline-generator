@@ -228,20 +228,80 @@ def main():
         
         # Team Management Section
         st.subheader("👥 Team Management")
-        if st.session_state.tasks:
-            unique_teams = list(set([task["Team"] for task in st.session_state.tasks]))
-            st.write(f"**Active Teams ({len(unique_teams)}):**")
-            for team in sorted(unique_teams):
+        
+        # Add new team functionality
+        with st.expander("➕ Add New Team", expanded=False):
+            new_team_name = st.text_input(
+                "Team Name",
+                placeholder="Enter new team name...",
+                key="new_team_input_sidebar",
+                help="Add a new team that will be available for task assignment"
+            )
+            
+            if st.button("Add Team", key="add_team_btn"):
+                if new_team_name and new_team_name.strip():
+                    # Check if team already exists
+                    existing_teams = list(set([task["Team"] for task in st.session_state.tasks]))
+                    all_available_teams = list(TEAM_COLORS.keys()) + existing_teams
+                    
+                    if new_team_name.strip() not in all_available_teams:
+                        # Add a dummy task to register the team (we'll remove this approach)
+                        # Instead, let's use session state to track custom teams
+                        if 'custom_teams' not in st.session_state:
+                            st.session_state.custom_teams = []
+                        
+                        if new_team_name.strip() not in st.session_state.custom_teams:
+                            st.session_state.custom_teams.append(new_team_name.strip())
+                            st.success(f"Team '{new_team_name.strip()}' added successfully!")
+                            st.rerun()
+                        else:
+                            st.warning("Team already exists in custom teams!")
+                    else:
+                        st.warning("Team already exists!")
+                else:
+                    st.error("Please enter a team name!")
+        
+        # Display current teams
+        if st.session_state.tasks or st.session_state.get('custom_teams', []):
+            active_teams = list(set([task["Team"] for task in st.session_state.tasks]))
+            custom_teams = st.session_state.get('custom_teams', [])
+            all_teams = list(set(active_teams + custom_teams))
+            
+            st.write(f"**Available Teams ({len(all_teams)}):**")
+            for team in sorted(all_teams):
                 team_color = get_team_color(team)
+                # Show task count for active teams
+                task_count = len([task for task in st.session_state.tasks if task["Team"] == team])
+                task_info = f" ({task_count} tasks)" if task_count > 0 else " (no tasks yet)"
+                
                 st.markdown(
                     f"<div style='display:flex; align-items:center; margin:2px 0;'>"
                     f"<span style='display:inline-block; width:12px; height:12px; "
                     f"background-color:{team_color}; border-radius:2px; margin-right:8px;'></span>"
-                    f"<span style='font-size:14px;'>{team}</span></div>",
+                    f"<span style='font-size:14px;'>{team}{task_info}</span></div>",
                     unsafe_allow_html=True
                 )
+                
+            # Option to remove custom teams that have no tasks
+            unused_custom_teams = [team for team in st.session_state.get('custom_teams', []) 
+                                 if team not in active_teams]
+            if unused_custom_teams:
+                st.write("**Remove unused teams:**")
+                for team in unused_custom_teams:
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.write(f"• {team}")
+                    with col2:
+                        if st.button("🗑️", key=f"remove_{team}", help=f"Remove {team}"):
+                            st.session_state.custom_teams.remove(team)
+                            st.success(f"Removed team '{team}'")
+                            st.rerun()
         else:
-            st.info("No teams yet. Add tasks to see teams here.")
+            st.info("No teams yet. Add your first team above!")
+        
+        # Initialize custom teams in session state
+        if 'custom_teams' not in st.session_state:
+            st.session_state.custom_teams = []
         
         st.markdown("---")
         
